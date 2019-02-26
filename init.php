@@ -69,3 +69,7 @@ require_once(dirname(__FILE__) . '/lib/webpay/soap/WSSecuritySoapClient.php');
 require_once(dirname(__FILE__) . '/lib/webpay/soap/XMLSecurityKey.php');
 require_once(dirname(__FILE__) . '/lib/webpay/soap/XMLSecurityDSig.php');
 require_once(dirname(__FILE__) . '/lib/webpay/soap/XMLSecEnc.php');
+
+// Logger
+require_once(dirname(__FILE__) . '/lib/webpay/TxtXmlLogger.php');
+require_once(dirname(__FILE__) . '/lib/webpay/LoggedWSSecuritySoapClient.php');

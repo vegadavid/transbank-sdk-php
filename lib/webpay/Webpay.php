@@ -69,9 +69,9 @@ class Webpay {
         $this->configuration = $params;
     }
 
-    public function getNormalTransaction() {
+    public function getNormalTransaction($txtXmlLogger = null) {
         if ($this->webpayNormal == null) {
-            $this->webpayNormal = new WebPayNormal($this->configuration);
+            $this->webpayNormal = new WebPayNormal($this->configuration,$txtXmlLogger);
         }
         return $this->webpayNormal;
     }

@@ -12,6 +12,7 @@ class WebPayNormal {
 
     var $soapClient;
     var $config;
+    var $txtXmlLogger;
 
     /** Configuración de URL según Ambiente */
     private static $WSDL_URL_NORMAL = array(
@@ -51,9 +52,9 @@ class WebPayNormal {
         'wsInitTransactionOutput' => 'Transbank\Webpay\initTransactionResponse'
     ];
 
-    function __construct($config)
+    function __construct($config, $txtXmlLogger = null)
     {
-
+        $this->txtXmlLogger = $txtXmlLogger;
         $this->config = $config;
         $privateKey = $this->config->getPrivateKey();
         $publicCert = $this->config->getPublicCert();
@@ -62,11 +63,20 @@ class WebPayNormal {
 
         $url = WebPayNormal::$WSDL_URL_NORMAL[$modo];
 
-        $this->soapClient = new WSSecuritySoapClient($url, $privateKey, $publicCert, array(
-            "classmap" => self::$classmap,
-            "trace" => true,
-            "exceptions" => true
-        ));
+        if (!empty($this->txtXmlLogger)) {
+            $this->soapClient = new LoggedWSSecuritySoapClient($this->txtXmlLogger, $url, $privateKey, $publicCert, array(
+                "classmap" => self::$classmap,
+                "trace" => true,
+                "exceptions" => true
+            ));
+        } else {
+            $this->soapClient = new WSSecuritySoapClient($url, $privateKey, $publicCert, array(
+                "classmap" => self::$classmap,
+                "trace" => true,
+                "exceptions" => true
+            ));
+        }
+            
     }
 
     /** Obtiene resultado desde Webpay */
@@ -130,11 +140,16 @@ class WebPayNormal {
 
             /** Validación de firma del requerimiento de respuesta enviado por Webpay */
             $xmlResponse = $this->soapClient->__getLastResponse();
+
             $soapValidation = new SoapValidation($xmlResponse, $this->config->getWebpayCert());
             $validationResult = $soapValidation->getValidationResult();
 
             /** Valida conexion a Webpay. Caso correcto retorna URL y Token */
             if ($validationResult === TRUE) {
+
+                if (!empty($this->txtXmlLogger)) {
+                    $this->txtXmlLogger->logXml("Response","initTransaction",$xmlResponse);
+                }
 
                 $wsInitTransactionOutput = $initTransactionResponse->return;
                 return $wsInitTransactionOutput;
@@ -176,6 +191,10 @@ class WebPayNormal {
             $validationResult = $soapValidation->getValidationResult();
 
             if ($validationResult === TRUE) {
+
+                if (!empty($this->txtXmlLogger)) {
+                    $this->txtXmlLogger->logXml("Response","getTransactionResult",$xmlResponse);
+                }
 
                 $transactionResultOutput = $getTransactionResultResponse->return;
 
@@ -220,7 +239,18 @@ class WebPayNormal {
         $xmlResponse = $this->soapClient->__getLastResponse();
         $soapValidation = new SoapValidation($xmlResponse, $this->config->getWebpayCert());
         $validationResult = $soapValidation->getValidationResult();
+        if ($validationResult === TRUE){
+            if (!empty($this->txtXmlLogger)) {
+                $this->txtXmlLogger->logXml("Response","acknowledgeTransaction",$xmlResponse);
+            }
+        }
         return $validationResult === TRUE;
+    }
+
+
+    public function setTxtXmlLogger(TxtXmlLogger $txtXmlLogger)
+    {
+        $this->txtXmlLogger = $txtXmlLogger;
     }
 
 }
